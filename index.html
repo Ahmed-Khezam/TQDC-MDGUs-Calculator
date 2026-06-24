@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00093f">
+<title>TAQA Distribution · MDGU Sizing Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+  /* ---------- TAQA Distribution brand tokens ----------
+     Pulled from the Al Ain badge:
+       navy  #00093f   teal #0ab3a1   purple #6b42d1
+     Light, corporate, clean — the brand's own register.
+     Signature: the kW result reads as a teal-on-navy utility readout,
+     echoing the logo's Q-meter mark.                                   */
+  :root{
+    --navy:#00093f;
+    --navy-2:#141a52;
+    --teal:#0ab3a1;
+    --teal-deep:#079083;
+    --purple:#6b42d1;
+    --purple-soft:#f0ebfb;
+    --ink:#11163a;
+    --muted:#6a7191;
+    --line:#e4e7f0;
+    --line-2:#eef0f6;
+    --bg:#f5f6fb;
+    --card:#ffffff;
+    --green:#0ab3a1;
+    --red:#e0455e;
+    --amber:#e8930c;
+    --r:16px;
+    --shadow:0 1px 2px rgba(16,22,58,.04),0 12px 32px rgba(16,22,58,.08);
+    --shadow-sm:0 1px 3px rgba(16,22,58,.07);
+    --mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Inter","Helvetica Neue",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);background:var(--bg);color:var(--ink);
+    min-height:100dvh;-webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px 64px}
+
+  /* ---------- Top brand bar ---------- */
+  .topbar{
+    background:var(--card);border-bottom:1px solid var(--line);
+    margin:0 -16px 0;padding:16px 16px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  }
+  .topbar .brand{display:flex;align-items:center;gap:14px}
+  .topbar img.logo{height:42px;width:auto;display:block}
+  .loc-pill{
+    background:var(--purple);color:#fff;border-radius:999px;padding:7px 16px;
+    font-weight:700;font-size:14px;letter-spacing:.3px;display:flex;align-items:center;gap:8px;
+    box-shadow:0 4px 14px rgba(107,66,209,.3);
+  }
+  .loc-pill .ar{font-size:13px;font-weight:500;opacity:.85;direction:rtl}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:30px 4px 8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--teal-deep);font-weight:500}
+  h1{font-size:clamp(26px,6vw,38px);font-weight:800;letter-spacing:-1px;line-height:1.05;margin-top:8px;color:var(--navy)}
+  h1 .ar{display:block;font-size:.5em;font-weight:600;color:var(--muted);direction:rtl;margin-top:6px;letter-spacing:0}
+  .hero p{color:var(--muted);font-size:15px;margin-top:12px;max-width:54ch;line-height:1.5}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:22px 20px;margin-top:18px;
+  }
+  .card-head{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+  .step{
+    width:26px;height:26px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;
+    background:var(--navy);color:#fff;font-family:var(--mono);font-size:13px;font-weight:500;
+  }
+  .card-head h2{font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+  .card-head .tail{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  .field{margin-bottom:18px}
+  .field:last-child{margin-bottom:0}
+  label.lab{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:9px}
+  .hint{font-weight:400;color:var(--muted)}
+
+  /* segmented */
+  .seg{display:flex;background:var(--line-2);border-radius:11px;padding:4px;gap:4px}
+  .seg button{
+    flex:1;padding:12px 8px;border:0;border-radius:8px;cursor:pointer;background:transparent;
+    color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;transition:.18s;
+  }
+  .seg button[aria-pressed="true"]{background:var(--card);color:var(--navy);box-shadow:var(--shadow-sm)}
+  .seg button:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+  .seg.volt button[aria-pressed="true"]{color:var(--teal-deep)}
+
+  /* inputs */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+  .inp-wrap{position:relative}
+  .inp-wrap .tag{position:absolute;left:13px;top:10px;font-family:var(--mono);font-size:11px;color:var(--teal-deep);font-weight:500;letter-spacing:.5px;pointer-events:none}
+  .inp-wrap .unit{position:absolute;right:14px;bottom:13px;font-family:var(--mono);font-size:13px;color:var(--muted);pointer-events:none}
+  input[type=number]{
+    width:100%;background:#fbfbfe;border:1.5px solid var(--line);border-radius:12px;color:var(--ink);
+    font-family:var(--mono);font-size:20px;padding:26px 40px 11px 13px;transition:.15s;font-weight:500;
+  }
+  input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(10,179,161,.12)}
+  input::placeholder{color:#b9bed3}
+  input:disabled{opacity:.45;cursor:not-allowed;background:var(--line-2)}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
+  .pf-note{
+    display:flex;align-items:center;gap:10px;background:var(--purple-soft);border-radius:12px;padding:13px 15px;
+    font-size:13px;color:#4a3a7a;
+  }
+  .pf-note b{font-family:var(--mono);color:var(--purple);font-size:15px}
+  .pf-note svg{flex:0 0 auto;width:18px;height:18px}
+
+  .err{color:var(--red);font-size:13px;font-family:var(--mono);margin-top:10px;min-height:16px}
+
+  /* ---------- Readout (signature) ---------- */
+  .readout{
+    border-radius:var(--r);overflow:hidden;background:var(--navy);
+    box-shadow:0 16px 40px rgba(0,9,63,.28);position:relative;
+  }
+  .readout::before{
+    content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;
+    border:18px solid rgba(10,179,161,.12);
+  }
+  .meter{padding:28px 22px 24px;text-align:center;position:relative}
+  .meter-label{font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8a90c0;margin-bottom:8px}
+  .big{font-family:var(--mono);font-weight:500;line-height:1;font-size:clamp(48px,15vw,82px);color:var(--teal);letter-spacing:-2px}
+  .big .u{font-size:.32em;color:#7de3d6;letter-spacing:1px;margin-left:8px}
+  .big.idle{color:#3a4180}.big.idle .u{color:#3a4180}
+  .detail{display:flex;flex-wrap:wrap;gap:1px;background:rgba(255,255,255,.08)}
+  .detail div{flex:1 1 33%;min-width:33%;background:var(--navy);padding:13px 14px;text-align:center}
+  .detail .k{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#7077a8;text-transform:uppercase}
+  .detail .v{font-family:var(--mono);font-size:15px;color:#eef0ff;margin-top:4px}
+
+  /* ---------- Generator pick ---------- */
+  .gen-pick{
+    margin-bottom:16px;padding:18px;border-radius:14px;display:flex;align-items:center;gap:15px;
+    background:linear-gradient(135deg,rgba(10,179,161,.1),rgba(10,179,161,.03));border:1.5px solid rgba(10,179,161,.35);
+  }
+  .gen-pick.idle{background:var(--line-2);border-color:var(--line);opacity:.85}
+  .gen-pick.over{background:linear-gradient(135deg,rgba(224,69,94,.08),rgba(224,69,94,.02));border-color:rgba(224,69,94,.35)}
+  .gen-pick.warn{background:linear-gradient(135deg,rgba(232,147,12,.1),rgba(232,147,12,.03));border-color:rgba(232,147,12,.4)}
+  .gen-pick.warn .gen-ico{background:rgba(232,147,12,.16)}
+  .gen-pick.warn .gen-v{color:var(--amber)}
+  .gen-ico{flex:0 0 auto;width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:rgba(10,179,161,.16)}
+  .gen-pick.idle .gen-ico{background:#e2e5ef}
+  .gen-pick.over .gen-ico{background:rgba(224,69,94,.14)}
+  .gen-ico svg{width:26px;height:26px}
+  .gen-k{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .gen-v{font-size:23px;font-weight:800;color:var(--teal-deep);margin-top:2px;letter-spacing:-.3px}
+  .gen-pick.idle .gen-v{color:var(--muted);font-size:16px;font-weight:600}
+  .gen-pick.over .gen-v{color:var(--red)}
+  .gen-note{font-size:13px;color:var(--muted);margin-top:3px}
+
+  .fleet-title{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:4px 0 11px}
+  .fleet-title .legend{text-transform:none;letter-spacing:0;color:var(--purple);font-size:11px;margin-left:4px}
+  .fleet{display:flex;flex-direction:column;gap:8px}
+  .unit{
+    display:flex;align-items:center;gap:13px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);
+    background:#fff;transition:.15s;
+  }
+  .unit .badge{font-family:var(--mono);font-size:12px;font-weight:500;padding:4px 9px;border-radius:7px;letter-spacing:.5px}
+  .unit .v415{background:rgba(10,179,161,.12);color:var(--teal-deep)}
+  .unit .v11k{background:var(--purple-soft);color:var(--purple)}
+  .unit .rating{font-size:17px;font-weight:700;color:var(--navy)}
+  .unit .meta{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .unit.dim{opacity:.4}
+  .unit.sel{border-color:var(--teal);background:rgba(10,179,161,.06);box-shadow:0 4px 14px rgba(10,179,161,.14)}
+  .unit.sel .check{color:var(--teal-deep)}
+  .unit .check{margin-left:10px;width:22px;height:22px;color:transparent;flex:0 0 auto}
+
+  /* ---- option cards (multi-config engine) ---- */
+  .opt{
+    border:1.5px solid var(--line);border-radius:13px;background:#fff;padding:13px 15px 14px;transition:.15s;
+  }
+  .opt.best{border-color:var(--teal);background:rgba(10,179,161,.05);box-shadow:0 6px 18px rgba(10,179,161,.13)}
+  .opt-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .opt .badge{font-family:var(--mono);font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
+  .opt .v415{background:rgba(10,179,161,.12);color:var(--teal-deep)}
+  .opt .v11k{background:var(--purple-soft);color:var(--purple)}
+  .opt-title{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+  .best-tag{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;font-weight:500;
+    background:var(--teal);color:#fff;padding:4px 8px;border-radius:6px}
+  .opt-kind{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px}
+  .opt-bar{position:relative;height:8px;border-radius:5px;background:var(--line-2);margin:12px 0 9px;overflow:hidden}
+  .opt-bar>span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;
+    background:linear-gradient(90deg,var(--teal-deep),var(--teal))}
+  .opt-bar>.min{position:absolute;left:25%;top:-2px;bottom:-2px;width:2px;background:var(--purple);opacity:.55}
+  .opt.best .opt-bar{background:#d8f3ee}
+  .opt-stats{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .opt-stats b{color:var(--navy);font-weight:500}
+  .opt-stats span:first-child b{color:var(--teal-deep)}
+  .loop-note{display:flex;align-items:flex-start;gap:9px;margin-top:11px;padding:9px 11px;border-radius:9px;
+    background:var(--purple-soft);color:#4a3a7a;font-size:12.5px;line-height:1.45}
+  .loop-note svg{flex:0 0 auto;width:17px;height:17px;color:var(--purple);margin-top:1px}
+  .loop-note b{color:var(--purple);font-weight:700}
+
+  /* ---- engineering advice panel (load too small) ---- */
+  .advice{border:1.5px solid rgba(232,147,12,.35);background:rgba(232,147,12,.05);border-radius:13px;padding:16px 17px}
+  .advice-h{font-size:14px;font-weight:700;color:#9a6207;margin-bottom:9px}
+  .advice p{font-size:13.5px;line-height:1.55;color:var(--ink);margin-bottom:9px}
+  .advice ul{margin:0 0 9px 18px}
+  .advice li{font-size:13px;line-height:1.5;color:#4a4636;margin-bottom:3px}
+  .advice b{color:#9a6207}
+  .advice .advice-rec{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:0;color:var(--ink)}
+  .advice .advice-rec b{color:var(--navy)}
+
+  .reset{
+    margin-top:20px;width:100%;padding:14px;border-radius:12px;cursor:pointer;background:#fff;
+    border:1.5px solid var(--line);color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;transition:.15s;
+  }
+  .reset:hover{border-color:var(--navy);color:var(--navy)}
+  .reset:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+
+  footer{margin-top:30px;padding-top:22px;border-top:1px solid var(--line);text-align:center}
+  footer img{height:30px;opacity:.92;margin-bottom:12px}
+  footer p{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:.3px}
+  .owner{margin-top:16px;display:inline-flex;flex-direction:column;gap:2px;align-items:center;
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 22px;box-shadow:var(--shadow-sm)}
+  .owner-k{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .owner-v{font-size:14px;font-weight:700;color:var(--navy);margin-top:2px}
+  .owner-id{font-family:var(--mono);font-size:11px;color:var(--teal-deep);letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand"><img class="logo" id="logoTop" alt="TAQA Distribution"></div>
+    <div class="loc-pill">Al Ain <span class="ar">العين</span></div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">MDGU Sizing Tool</div>
+    <h1>Mobile Diesel Generator Sizing<span class="ar">حاسبة اختيار مولدات الديزل المتنقلة</span></h1>
+    <p>Enter the connected load to calculate real power demand, then select the nearest available TAQA Distribution generator unit.</p>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="card">
+    <div class="card-head"><span class="step">1</span><h2>Load Definition</h2></div>
+
+    <div class="field">
+      <label class="lab">System type</label>
+      <div class="seg" id="segPhase" role="group" aria-label="Phase type">
+        <button type="button" data-v="3" aria-pressed="true">3-Phase</button>
+        <button type="button" data-v="1" aria-pressed="false">Single-Phase</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lab">Voltage level</label>
+      <div class="seg volt" id="segVolt" role="group" aria-label="Voltage level">
+        <button type="button" data-v="415" aria-pressed="true">415 V</button>
+        <button type="button" data-v="11000" aria-pressed="false">11 kV</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lab">Line currents <span class="hint" id="curHint">— amps per phase</span></label>
+      <div class="grid3">
+        <div class="inp-wrap"><span class="tag">L1</span><span class="unit">A</span>
+          <input type="number" inputmode="decimal" id="L1" placeholder="0" min="0" step="any" aria-label="Line 1 current amps"></div>
+        <div class="inp-wrap"><span class="tag">L2</span><span class="unit">A</span>
+          <input type="number" inputmode="decimal" id="L2" placeholder="0" min="0" step="any" aria-label="Line 2 current amps"></div>
+        <div class="inp-wrap"><span class="tag">L3</span><span class="unit">A</span>
+          <input type="number" inputmode="decimal" id="L3" placeholder="0" min="0" step="any" aria-label="Line 3 current amps"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lab">Power factor</label>
+      <div class="pf-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#6b42d1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+        <span>Fixed at <b>0.80</b> for all generator load calculations.</span>
+      </div>
+    </div>
+
+    <div class="err" id="err"></div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card">
+    <div class="card-head"><span class="step">2</span><h2>Calculated Demand</h2></div>
+    <div class="readout">
+      <div class="meter">
+        <div class="meter-label">Total real power</div>
+        <div class="big idle" id="kwBig">— <span class="u">kW</span></div>
+      </div>
+      <div class="detail">
+        <div><div class="k">Apparent</div><div class="v" id="kva">— kVA</div></div>
+        <div><div class="k">Avg current</div><div class="v" id="iavg">— A</div></div>
+        <div><div class="k">Formula</div><div class="v" id="formula">√3·V·I·pf</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card">
+    <div class="card-head"><span class="step">3</span><h2>Generator Selection</h2><span class="tail" id="vTail">415 V fleet</span></div>
+
+    <div class="gen-pick idle" id="genPick">
+      <div class="gen-ico" aria-hidden="true">
+        <svg id="genSvg" viewBox="0 0 24 24" fill="none" stroke="#6a7191" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="11" rx="2"/><path d="M6 7V5h6v2M2 12h20M7 18v2M17 18v2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="gen-k">Recommended configuration</div>
+        <div class="gen-v" id="genVal">Awaiting load</div>
+        <div class="gen-note" id="genNote">Enter a load to see options</div>
+      </div>
+    </div>
+
+    <div class="fleet-title">Valid configurations — <span id="fleetV">415 V</span> <span class="legend">▏ purple line = 25% min load</span></div>
+    <div class="fleet" id="fleet"></div>
+  </section>
+
+  <button class="reset" id="reset">Clear inputs</button>
+
+  <footer>
+    <img id="logoFoot" alt="TAQA Distribution">
+    <p>
+      Every configuration shown keeps each engaged unit between 25% and 100% of its rating.<br>
+      Paralleling is available on the smart Perkins units only (mixable); larger sets run single.<br>
+      Power factor fixed at 0.80. Verify derating for altitude, ambient temperature & duty cycle before deployment.<br>
+      TAQA Distribution · Al Ain
+    </p>
+    <div class="owner">
+      <span class="owner-k">Developed by</span>
+      <span class="owner-v">Eng. Ahmed Khezam AlAmeri</span>
+      <span class="owner-id">File No. 124271</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ----- Available TAQA fleet (named units, voltage-specific) -----
+  // smart:true  -> unit can be paralleled (and mixed) with other smart units
+  var FLEET = [
+    {name:"Perkins SM4", kw:120,  v:415,   smart:true},
+    {name:"Perkins SM3", kw:160,  v:415,   smart:true},
+    {name:"Perkins SM1", kw:200,  v:415,   smart:true},
+    {name:"Perkins SM2", kw:200,  v:415,   smart:true},
+    {name:"VOLVO",       kw:220,  v:415,   smart:false},
+    {name:"GM2",         kw:250,  v:415,   smart:false},
+    {name:"CAT LV",      kw:1000, v:415,   smart:false},
+    {name:"MTU1",        kw:1200, v:415,   smart:false},
+    {name:"MTU2",        kw:1200, v:415,   smart:false},
+    {name:"CAT HV",      kw:1000, v:11000, smart:false}
+  ];
+
+  // Engineering rules
+  var MIN_LOAD = 0.25;   // each engaged unit must carry > 25% of its capacity
+  var MAX_LOAD = 1.00;   // and no more than 100% (full nameplate)
+
+  var PF = 0.80; // fixed
+  var state = { phase:3, volt:415 };
+
+  var $=function(id){return document.getElementById(id);};
+  var L1=$("L1"),L2=$("L2"),L3=$("L3");
+  var kwBig=$("kwBig"),kva=$("kva"),iavg=$("iavg"),formula=$("formula");
+  var genPick=$("genPick"),genVal=$("genVal"),genNote=$("genNote"),genSvg=$("genSvg");
+  var fleet=$("fleet"),err=$("err"),curHint=$("curHint"),vTail=$("vTail"),fleetV=$("fleetV");
+
+  function bindSeg(gid,key,after){
+    var g=$(gid);
+    g.addEventListener("click",function(e){
+      var b=e.target.closest("button"); if(!b) return;
+      [].forEach.call(g.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false");});
+      b.setAttribute("aria-pressed","true");
+      state[key]=parseFloat(b.dataset.v);
+      if(after) after();
+      compute();
+    });
+  }
+  bindSeg("segPhase","phase",function(){
+    var s=state.phase===1;
+    L2.disabled=s;L3.disabled=s;
+    if(s){L2.value="";L3.value="";}
+    curHint.textContent=s?"— single line current":"— amps per phase";
+  });
+  bindSeg("segVolt","volt",function(){
+    var lbl=state.volt===415?"415 V":"11 kV";
+    vTail.textContent=lbl+" fleet";
+    fleetV.textContent=lbl;
+  });
+
+  [L1,L2,L3].forEach(function(el){el.addEventListener("input",compute);});
+
+  function vLabel(v){return v===415?"415 V":"11 kV";}
+  function fmt(n){return n.toFixed(1);}
+
+  function compute(){
+    err.textContent="";
+    var V=state.volt;
+    var i1=parseFloat(L1.value)||0, i2=parseFloat(L2.value)||0, i3=parseFloat(L3.value)||0;
+    if(i1<0||i2<0||i3<0) err.textContent="Currents cannot be negative.";
+
+    var kW,kVA,Iavg,has;
+    if(state.phase===3){
+      var sumI=i1+i2+i3, Vp=V/Math.sqrt(3);
+      kVA=(Vp*sumI)/1000; kW=kVA*PF; Iavg=sumI/3; has=sumI>0;
+      formula.textContent="√3·V·I·pf";
+    }else{
+      kVA=(V*i1)/1000; kW=kVA*PF; Iavg=i1; has=i1>0;
+      formula.textContent="V·I·pf";
+    }
+
+    if(!has){
+      kwBig.className="big idle"; kwBig.innerHTML='— <span class="u">kW</span>';
+      kva.textContent="— kVA"; iavg.textContent="— A";
+      renderFleet(null); return;
+    }
+    kwBig.className="big"; kwBig.innerHTML=fmt(kW)+' <span class="u">kW</span>';
+    kva.textContent=fmt(kVA)+" kVA"; iavg.textContent=fmt(Iavg)+" A";
+    renderFleet(kW);
+  }
+
+  function renderFleet(kW){
+    var eligible=FLEET.filter(function(u){return u.v===state.volt;})
+                      .slice().sort(function(a,b){return a.kw-b.kw;});
+
+    // idle state
+    if(kW===null){
+      genPick.className="gen-pick idle";
+      genVal.textContent="Awaiting load";
+      genNote.textContent="Enter a load to see recommended configurations";
+      genSvg.setAttribute("stroke","#6a7191");
+      fleet.innerHTML="";
+      return;
+    }
+
+    var options=buildOptions(kW, eligible);
+
+    // ----- headline = best option -----
+    if(options.length===0){
+      var smallest=eligible.length?eligible[0].kw:0;
+      var largest=eligible.length?eligible[eligible.length-1].kw:0;
+      var floor=smallest*MIN_LOAD;   // 25% of the smallest available unit
+
+      if(kW < floor){
+        // TOO SMALL — running any genset this lightly is harmful
+        genPick.className="gen-pick warn";
+        genVal.textContent="Shutdown not recommended";
+        genNote.textContent="Load "+fmt(kW)+" kW is below 25% of the smallest unit ("+smallest+" kW → "+fmt(floor)+" kW minimum).";
+        genSvg.setAttribute("stroke","#e8930c");
+        fleet.innerHTML=
+          '<div class="advice">'+
+            '<div class="advice-h">Why a generator should not carry this load</div>'+
+            '<p>Running a diesel genset below ~25% of its rating causes <b>wet stacking</b> — '+
+            'unburned fuel and oil collect in the exhaust and turbocharger because combustion '+
+            'temperatures stay too low for complete burn. Over time this leads to:</p>'+
+            '<ul>'+
+              '<li>Carbon glazing of cylinder bores and fouled injectors</li>'+
+              '<li>Black exhaust deposits, oil leaks at the turbo and manifold</li>'+
+              '<li>Permanent power loss and higher maintenance / engine damage</li>'+
+            '</ul>'+
+            '<p class="advice-rec">Recommendation: keep the existing supply, defer the shutdown, or '+
+            'pair the smallest unit ('+smallest+' kW) with a <b>load bank</b> to lift it above '+fmt(floor)+' kW '+
+            'before transferring load.</p>'+
+          '</div>';
+        return;
+      }
+
+      // TOO LARGE — beyond what the fleet can deliver within the band
+      genPick.className="gen-pick over";
+      genVal.textContent="Exceeds "+vLabel(state.volt)+" fleet";
+      genNote.textContent="Demand "+fmt(kW)+" kW is above the largest available capacity ("+largest+" kW). Consider 11 kV supply, or additional / larger units.";
+      genSvg.setAttribute("stroke","#e0455e");
+      fleet.innerHTML="";
+      return;
+    }
+
+    var best=options[0];
+    genPick.className="gen-pick";
+    genVal.textContent=best.title;
+    genNote.textContent="Demand "+fmt(kW)+" kW · "+best.loadPct.toFixed(0)+"% load per unit · "+fmt(best.totalKw)+" kW available";
+    genSvg.setAttribute("stroke","#079083");
+
+    // ----- option cards -----
+    fleet.innerHTML="";
+    options.forEach(function(o,idx){
+      var row=document.createElement("div");
+      row.className="opt"+(idx===0?" best":"");
+      var vcls=state.volt===415?"v415":"v11k";
+      var tag=o.count>1?(o.count+"× parallel"):"single unit";
+      row.innerHTML=
+        '<div class="opt-top">'+
+          '<span class="badge '+vcls+'">'+vLabel(state.volt)+'</span>'+
+          '<span class="opt-title">'+o.title+'</span>'+
+          (idx===0?'<span class="best-tag">RECOMMENDED</span>':'<span class="opt-kind">'+tag+'</span>')+
+        '</div>'+
+        '<div class="opt-bar"><span style="width:'+Math.min(100,o.loadPct).toFixed(1)+'%"></span>'+
+          '<i class="min" title="25% minimum"></i></div>'+
+        '<div class="opt-stats">'+
+          '<span><b>'+o.loadPct.toFixed(0)+'%</b> load / unit</span>'+
+          '<span>'+fmt(o.totalKw)+' kW total</span>'+
+          '<span>'+fmt(o.totalKw-kW)+' kW spare</span>'+
+        '</div>'+
+        (o.count>1 ?
+          '<div class="loop-note">'+
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8a4 4 0 0 0 0 8h3M17 16a4 4 0 0 0 0-8h-3M9 12h6"/></svg>'+
+            '<span><b>Parallel operation:</b> take the looping (synchronising) cables — '+o.count+' units must be interconnected on site.</span>'+
+          '</div>'
+        : '');
+      fleet.appendChild(row);
+    });
+  }
+
+  // Build & rank all viable configurations for a given demand.
+  function buildOptions(kW, eligible){
+    var opts=[];
+
+    // 1) SINGLE-UNIT options: any one eligible unit in band
+    eligible.forEach(function(u){
+      var lp=kW/u.kw;                 // load fraction on this single unit
+      if(lp>MIN_LOAD && lp<=MAX_LOAD){
+        opts.push({
+          title:u.name+" · "+u.kw+" kW",
+          units:[u.name], count:1, totalKw:u.kw,
+          loadPct:lp*100
+        });
+      }
+    });
+
+    // 2) PARALLEL options: smart units only, may be mixed, 2..N sets
+    var smart=eligible.filter(function(u){return u.smart;});
+    if(smart.length>=2){
+      var combos=combosUpTo(smart, smart.length); // all multi-unit subsets (size>=2)
+      combos.forEach(function(set){
+        var total=set.reduce(function(s,u){return s+u.kw;},0);
+        if(total<kW) return;                       // must meet demand
+        // equal-share assumption: each unit carries demand * (its kw/total)?
+        // For paralleled gensets load shares in proportion to capacity,
+        // so every unit sits at the SAME load fraction = kW/total.
+        var lp=kW/total;
+        if(lp>MIN_LOAD && lp<=MAX_LOAD){
+          opts.push({
+            title:setTitle(set),
+            units:set.map(function(u){return u.name;}),
+            count:set.length, totalKw:total,
+            loadPct:lp*100
+          });
+        }
+      });
+    }
+
+    // de-dup identical titles (keep first)
+    var seen={}, uniq=[];
+    opts.forEach(function(o){ if(!seen[o.title]){seen[o.title]=1;uniq.push(o);} });
+
+    // ----- ranking -----
+    // Prefer: fewer units, then load closest to a comfortable target, then less spare.
+    // "Just more than 25%" → reward higher utilisation but stay <=100%.
+    uniq.sort(function(a,b){
+      if(a.count!==b.count) return a.count-b.count;          // simpler first
+      // higher load % is more efficient (closer to full use), so sort desc
+      if(Math.abs(a.loadPct-b.loadPct)>0.5) return b.loadPct-a.loadPct;
+      return (a.totalKw-kW)-(b.totalKw-kW);                  // least spare
+    });
+    return uniq;
+  }
+
+  // all subsets of size >=2 (cap total size to keep it sane)
+  function combosUpTo(arr, maxSize){
+    var res=[];
+    var n=arr.length;
+    var limit=1<<n;
+    for(var mask=1; mask<limit; mask++){
+      var set=[], bits=0;
+      for(var i=0;i<n;i++){ if(mask&(1<<i)){set.push(arr[i]);bits++;} }
+      if(bits>=2 && bits<=maxSize) res.push(set);
+    }
+    return res;
+  }
+
+  // "2× 200 kW (SM1+SM2)" or "200+160 kW (SM1+SM3)"
+  function setTitle(set){
+    var kws=set.map(function(u){return u.kw;});
+    var allSame=kws.every(function(k){return k===kws[0];});
+    var names=set.map(function(u){return shortName(u.name);}).join("+");
+    if(allSame) return set.length+"× "+kws[0]+" kW ("+names+")";
+    return kws.join("+")+" kW ("+names+")";
+  }
+  function shortName(n){ return n.replace("Perkins ",""); }
+
+  $("reset").addEventListener("click",function(){
+    L1.value="";L2.value="";L3.value=""; compute(); L1.focus();
+  });
+
+  compute();
+
+  // ----- inject embedded logo -----
+  window.__setLogo=function(dataUri){
+    document.getElementById("logoTop").src=dataUri;
+    document.getElementById("logoFoot").src=dataUri;
+  };
+})();
+</script>
+<script>window.__setLogo("data:image/png;base64,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");</script>
+</body>
+</html>
